@@ -1,0 +1,9 @@
+export type * from './api';
+export type * from './user';
+export type * from './chat';
+export type * from './message';
+export type * from './update';
+export type * from './inline-message';
+export type * from './keypad';
+export type * from './media';
+export type * from './poll';
