@@ -1,0 +1,53 @@
+{
+    "name": "rubika.js",
+    "version": "0.1.0",
+    "description": "A powerful library for building Rubika messenger bots with TypeScript.",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "require": "./dist/index.js",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "lint": "eslint .",
+        "format": "prettier --write \"src/**/*.ts\"",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "docs": "typedoc"
+    },
+    "keywords": [
+        "rubika",
+        "bot",
+        "typescript",
+        "discord.js-like",
+        "rubika.js"
+    ],
+    "author": "Sobhan-SRZA (mr.sinre) from Persian Caesar",
+    "license": "MIT",
+    "dependencies": {
+        "undici": "^6.0.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.0.0",
+        "@types/node": "^22.0.0",
+        "@vitest/coverage-v8": "^1.0.0",
+        "eslint": "^9.0.0",
+        "prettier": "^3.4.0",
+        "typedoc": "^0.28.20",
+        "typescript": "^5.7.0",
+        "typescript-eslint": "^8.0.0",
+        "vitest": "^1.0.0"
+    },
+    "files": [
+        "dist"
+    ],
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
