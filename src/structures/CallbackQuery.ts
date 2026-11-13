@@ -14,13 +14,15 @@ export class CallbackQuery extends Base {
         this.chatId = data.chat_id;
         this.messageId = data.message_id;
         this.fromId = data.sender_id;
-        this.buttonId = data.button_id;
-        this.data = data.data;
+        // ✅ button_id درون aux_data قرار دارد
+        this.buttonId = data.aux_data?.button_id ?? '';
+        this.data = data.data; // اگر فیلد data جداگانه وجود داشته باشد
     }
 
     async answer(text?: string): Promise<boolean> {
-        return this.client.rest.request<boolean>('answerCallbackQuery', {
-            body: { callback_query_id: this.buttonId, text },
+        return await this.client.rest.answerCallbackQuery({
+            callback_query_id: this.buttonId,
+            text,
         });
     }
 }

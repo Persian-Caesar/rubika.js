@@ -49,7 +49,9 @@ export class WebhookManager {
         req.on('data', (chunk) => (body += chunk));
         req.on('end', () => {
             try {
-                const update = JSON.parse(body).update as Update;
+                const parsed = JSON.parse(body);
+                // ممکن است روبیکا update را مستقیماً بفرستد یا داخل کلید update
+                const update = (parsed.update ?? parsed) as Update;
                 this.client.dispatchUpdate(update);
                 res.writeHead(200).end('OK');
             } catch (error) {
