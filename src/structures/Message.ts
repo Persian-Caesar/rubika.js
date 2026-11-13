@@ -49,6 +49,7 @@ export class Message extends Base {
     get hasLocation(): boolean { return this._raw.location !== undefined; }
     get hasContact(): boolean { return this._raw.contact !== undefined; }
     get hasSticker(): boolean { return this._raw.sticker !== undefined; }
+    get isEdited(): boolean { return this._raw.is_edited === true; }
 
     async reply(text: string, options?: { inline_keypad?: any; metadata?: any }): Promise<Message> {
         return await this.client.messages.send(this.chat.id, text, {

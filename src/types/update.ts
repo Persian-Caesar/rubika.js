@@ -18,7 +18,10 @@ export interface Update {
     updated_message?: APIMessage;
     removed_message_id?: string;
     inline_message?: InlineMessage;
-    event_data?: unknown;
+    event_data?: {
+        type?: string; // مثلاً "BotJoined", "BotRemoved", ...
+        [key: string]: unknown;
+    };
 }
 
 export interface GetUpdatesResult {
