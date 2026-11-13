@@ -18,7 +18,13 @@ export interface RubikaClientOptions {
     /** حالت دریافت رویداد. پیش‌فرض: polling. auto-webhook حذف شده است. */
     mode?: 'polling' | 'webhook';
     polling?: { interval?: number; limit?: number; skipOldUpdatesOnStart?: boolean };
-    webhook?: { endpoint: string; port?: number; path?: string };
+    webhook?: {
+        endpoint: string;
+        port?: number;
+        /** مسیر پایه اختیاری؛ مسیرهای نهایی /receiveUpdate و /receiveInlineMessage */
+        path?: string;
+        maxBodyBytes?: number;
+    };
     /**
      * فقط برای حالت polling:
      * اگر true باشد، ثبت listener برای callbackQuery خطا نمی‌دهد و
@@ -108,6 +114,8 @@ export class RubikaClient extends TypedEmitter<ClientEvents> {
             this.webhookManager = new WebhookManager(this, {
                 baseUrl: this.options.webhook.endpoint,
                 port: this.options.webhook.port,
+                path: this.options.webhook.path,
+                maxBodyBytes: this.options.webhook.maxBodyBytes,
             });
             await this.webhookManager.start();
         } else {

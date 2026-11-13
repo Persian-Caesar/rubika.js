@@ -32,24 +32,35 @@ export class InlineKeypadBuilder extends BaseBuilder<Keypad> {
 
     /**
      * اندازه ردیف‌ها را تنظیم می‌کند. آخرین اندازه برای دکمه‌های باقیمانده تکرار می‌شود.
-     * می‌توان چندبار فراخوانی کرد و دکمه‌های جدید بعد از آن اضافه کرد.
+     * مقادیر ≤ 0 رد می‌شوند تا حلقه بی‌نهایت رخ ندهد.
      */
     adjust(...sizes: number[]): this {
-        this.rowSizes.push(...sizes);
+        for (const size of sizes) {
+            if (!Number.isFinite(size) || size <= 0) {
+                throw new Error(
+                    `InlineKeypadBuilder.adjust: اندازه ردیف باید عدد مثبت باشد (دریافت شد: ${size})`,
+                );
+            }
+            this.rowSizes.push(Math.floor(size));
+        }
         return this;
     }
 
     build(): Keypad {
+        if (this.buttons.length === 0) {
+            return { rows: [] };
+        }
+
         if (this.rowSizes.length === 0) {
             return { rows: [{ buttons: [...this.buttons] }] };
         }
 
         const rows: { buttons: Button[] }[] = [];
         let index = 0;
+
         for (let i = 0; i < this.rowSizes.length; i++) {
             const size = this.rowSizes[i]!;
             if (i === this.rowSizes.length - 1) {
-                // آخرین اندازه برای بقیه دکمه‌ها تکرار می‌شود
                 while (index < this.buttons.length) {
                     rows.push({ buttons: this.buttons.slice(index, index + size) });
                     index += size;
@@ -60,9 +71,11 @@ export class InlineKeypadBuilder extends BaseBuilder<Keypad> {
                 index += size;
             }
         }
+
         if (index < this.buttons.length) {
             rows.push({ buttons: this.buttons.slice(index) });
         }
+
         return { rows };
     }
 }

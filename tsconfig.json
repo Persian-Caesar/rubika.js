@@ -11,6 +11,8 @@
         "inlineSourceMap": true,
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
         "rootDir": "./src",
         "outDir": "./dist"
     },

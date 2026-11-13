@@ -7,6 +7,5 @@ export interface InlineMessage {
         start_id?: string | null;
         button_id?: string;
     };
-    /** ممکن است در برخی پاسخ‌ها وجود داشته باشد */
     data?: string;
 }

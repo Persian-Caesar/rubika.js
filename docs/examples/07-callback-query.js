@@ -5,8 +5,11 @@ const { RubikaClient, InlineKeypadBuilder } = require('../../dist/index.js');
 
 const client = new RubikaClient({
     token: process.env.RUBIKA_TOKEN,
-    mode: 'polling',
-    allowCallbackQueryInPolling: true
+    mode: 'webhook',
+    webhook: {
+        endpoint: "https://bot.persiancaesar.ir", // فقط دامنه
+        port: 3000
+    }
 });
 
 client.on('ready', (bot) => {

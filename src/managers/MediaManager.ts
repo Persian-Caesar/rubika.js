@@ -1,7 +1,7 @@
 import { BaseManager } from './BaseManager';
 import { Message } from '../structures/Message';
 import type { RubikaClient } from '../client/RubikaClient';
-import type { FileInput, MediaType } from '../types/media';
+import type { FileInput, MediaType, SendFileOptions } from '../types/media';
 import type { APIMessage } from '../types/message';
 
 export class MediaManager extends BaseManager {
@@ -13,19 +13,12 @@ export class MediaManager extends BaseManager {
         chatId: string,
         type: MediaType,
         input: FileInput,
-        caption?: string,
+        captionOrOptions?: string | SendFileOptions,
     ): Promise<Message> {
-        if (Buffer.isBuffer(input)) {
-            const data = await this.client.rest.request<{ message_id: string }>('sendFile', {
-                body: { chat_id: chatId, type, caption },
-                files: { file: { data: input, filename: 'file' } },
-            });
-            return new Message(this.client, {
-                chat_id: chatId,
-                message_id: data.message_id,
-                time: '0',
-            } as APIMessage);
-        }
+        const options: SendFileOptions =
+            typeof captionOrOptions === 'string'
+                ? { caption: captionOrOptions }
+                : (captionOrOptions ?? {});
 
         if (input instanceof URL) {
             throw new Error(
@@ -33,19 +26,115 @@ export class MediaManager extends BaseManager {
             );
         }
 
-        // اصلاح باگ ۱.۵: رشته فقط به‌عنوان file_id در نظر گرفته می‌شود
+        if (typeof input === 'string') {
+            const data = await this.client.rest.request<{ message_id: string }>('sendFile', {
+                body: {
+                    chat_id: chatId,
+                    type,
+                    file_id: input,
+                    caption: options.caption,
+                    file_name: options.file_name,
+                    disable_notification: options.disable_notification,
+                    reply_to_message_id: options.reply_to_message_id,
+                    inline_keypad: options.inline_keypad,
+                },
+            });
+            return this.makeMessage(chatId, data.message_id, options.caption);
+        }
+
+        const filename = options.file_name ?? 'file';
+        const contentType = guessContentType(type, filename);
+
+        try {
+            const uploadInfo = await this.client.rest.requestSendFile({
+                chat_id: chatId,
+                type,
+            });
+            const uploadUrl = uploadInfo.upload_url ?? uploadInfo.url;
+
+            if (uploadUrl) {
+                const uploaded = (await this.client.rest.uploadToUrl(
+                    uploadUrl,
+                    input,
+                    filename,
+                    contentType,
+                )) as { file_id?: string; data?: { file_id?: string } };
+
+                const fileId =
+                    uploaded?.file_id ?? uploaded?.data?.file_id ?? uploadInfo.file_id;
+
+                if (fileId) {
+                    const data = await this.client.rest.request<{ message_id: string }>('sendFile', {
+                        body: {
+                            chat_id: chatId,
+                            type,
+                            file_id: fileId,
+                            caption: options.caption,
+                            file_name: filename,
+                            disable_notification: options.disable_notification,
+                            reply_to_message_id: options.reply_to_message_id,
+                            inline_keypad: options.inline_keypad,
+                        },
+                    });
+                    return this.makeMessage(chatId, data.message_id, options.caption);
+                }
+            }
+        } catch {
+            // fallback multipart
+        }
+
         const data = await this.client.rest.request<{ message_id: string }>('sendFile', {
-            body: { chat_id: chatId, type, file_id: input, caption },
+            body: {
+                chat_id: chatId,
+                type,
+                caption: options.caption,
+                file_name: filename,
+                disable_notification: options.disable_notification,
+                reply_to_message_id: options.reply_to_message_id,
+                inline_keypad: options.inline_keypad,
+            },
+            files: {
+                file: { data: input, filename, contentType },
+            },
         });
-        return new Message(this.client, {
-            chat_id: chatId,
-            message_id: data.message_id,
-            time: '0',
-        } as APIMessage);
+        return this.makeMessage(chatId, data.message_id, options.caption);
     }
 
     async downloadFile(fileId: string): Promise<Buffer> {
         const file = await this.client.rest.getFile(fileId);
-        return this.client.rest.downloadFile(this.client.rest.getDownloadUrl(file.file_id));
+        const id = file.file_id || fileId;
+        return this.client.rest.downloadFile(this.client.rest.getDownloadUrl(id));
+    }
+
+    private makeMessage(chatId: string, messageId: string, caption?: string): Message {
+        return new Message(this.client, {
+            chat_id: chatId,
+            message_id: messageId,
+            time: String(Math.floor(Date.now() / 1000)),
+            caption,
+        } as APIMessage);
+    }
+}
+
+function guessContentType(type: MediaType, filename: string): string {
+    const lower = filename.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.mp4')) return 'video/mp4';
+    if (lower.endsWith('.mp3')) return 'audio/mpeg';
+    if (lower.endsWith('.ogg')) return 'audio/ogg';
+    switch (type) {
+        case 'Image':
+            return 'image/jpeg';
+        case 'Video':
+            return 'video/mp4';
+        case 'Audio':
+            return 'audio/mpeg';
+        case 'Voice':
+            return 'audio/ogg';
+        default:
+            return 'application/octet-stream';
     }
 }

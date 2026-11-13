@@ -22,14 +22,30 @@ export class MessageManager extends BaseManager {
     async send(chatId: string, text: string, options?: SendMessageOptions): Promise<Message> {
         const payload = { chat_id: chatId, text, ...options };
         const data = await this.client.rest.sendMessage(payload);
-        return new Message(this.client, { ...payload, message_id: data.message_id } as APIMessage);
+        return new Message(this.client, {
+            ...data,
+            chat_id: chatId,
+            message_id: data.message_id,
+            text,
+            time: String(Math.floor(Date.now() / 1000)),
+        } as APIMessage);
     }
 
     async edit(chatId: string, messageId: string, text: string): Promise<Message> {
-        const data = await this.client.rest.request<APIMessage>('editMessageText', {
-            body: { chat_id: chatId, message_id: messageId, text },
+        const data = await this.client.rest.editMessageText({
+            chat_id: chatId,
+            message_id: messageId,
+            text,
         });
-        return new Message(this.client, data);
+        const messageIdOut =
+            'message_id' in data && data.message_id ? data.message_id : messageId;
+        return new Message(this.client, {
+            ...(typeof data === 'object' ? data : {}),
+            chat_id: chatId,
+            message_id: messageIdOut,
+            text,
+            time: String(Math.floor(Date.now() / 1000)),
+        } as APIMessage);
     }
 
     async editKeypad(chatId: string, messageId: string, keypad: Keypad): Promise<void> {
@@ -41,8 +57,9 @@ export class MessageManager extends BaseManager {
     }
 
     async delete(chatId: string, messageId: string): Promise<void> {
-        await this.client.rest.request<boolean>('deleteMessage', {
-            body: { chat_id: chatId, message_id: messageId },
+        await this.client.rest.deleteMessage({
+            chat_id: chatId,
+            message_id: messageId,
         });
     }
 
@@ -79,7 +96,8 @@ export class MessageManager extends BaseManager {
         return new Message(this.client, {
             chat_id: chatId,
             message_id: data.message_id,
-            time: '0',
+            text: question,
+            time: String(Math.floor(Date.now() / 1000)),
         } as APIMessage);
     }
 
@@ -98,7 +116,8 @@ export class MessageManager extends BaseManager {
         return new Message(this.client, {
             chat_id: chatId,
             message_id: data.message_id,
-            time: '0',
+            time: String(Math.floor(Date.now() / 1000)),
+            location: { latitude, longitude },
         } as APIMessage);
     }
 
@@ -115,7 +134,8 @@ export class MessageManager extends BaseManager {
         return new Message(this.client, {
             chat_id: chatId,
             message_id: data.message_id,
-            time: '0',
+            time: String(Math.floor(Date.now() / 1000)),
+            contact,
         } as APIMessage);
     }
 }
