@@ -6,6 +6,7 @@ const { RubikaClient, InlineKeypadBuilder } = require('../../dist/index.js');
 const client = new RubikaClient({
     token: process.env.RUBIKA_TOKEN,
     mode: 'polling',
+    allowCallbackQueryInPolling: true
 });
 
 client.on('ready', (bot) => {

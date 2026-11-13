@@ -3,31 +3,40 @@ import type { RubikaClient } from '../client/RubikaClient';
 import type { Update } from '../types/update';
 
 export interface WebhookOptions {
-    endpoint: string;
+    baseUrl: string;
     port?: number;
-    path?: string;
 }
 
 export class WebhookManager {
     private readonly client: RubikaClient;
-    private readonly endpoint: string;
+    private readonly baseUrl: string;
     private readonly port: number;
-    private readonly path: string;
     private server?: Server;
 
     constructor(client: RubikaClient, options: WebhookOptions) {
         this.client = client;
-        this.endpoint = options.endpoint;
+        this.baseUrl = options.baseUrl.replace(/\/$/, ''); // حذف اسلش انتهایی
         this.port = options.port ?? 3000;
-        this.path = options.path ?? '/rubika/webhook';
     }
 
     async start(): Promise<void> {
-        await this.client.rest.updateBotEndpoint(this.endpoint);
+        // Register endpoint for regular messages
+        await this.client.rest.updateBotEndpoint(
+            `${this.baseUrl}/receiveUpdate`
+        );
+        // Register endpoint for inline button callbacks
+        await this.client.rest.updateBotEndpoint(
+            `${this.baseUrl}/receiveInlineMessage`
+        );
+
+        // Start local HTTP server
         this.server = createServer((req, res) => this.handleRequest(req, res));
         await new Promise<void>((resolve, reject) => {
-            this.server!.listen(this.port, () => resolve());
-            this.server!.on('error', reject);
+            this.server!.once('error', reject);
+            this.server!.listen(this.port, () => {
+                this.server!.off('error', reject);
+                resolve();
+            });
         });
     }
 
@@ -41,16 +50,20 @@ export class WebhookManager {
     }
 
     private handleRequest(req: IncomingMessage, res: ServerResponse): void {
-        if (req.method !== 'POST' || req.url !== this.path) {
+        // Accept both paths
+        if (
+            req.method !== 'POST' ||
+            (req.url !== '/receiveUpdate' && req.url !== '/receiveInlineMessage')
+        ) {
             res.writeHead(404).end();
             return;
         }
+        
         let body = '';
         req.on('data', (chunk) => (body += chunk));
         req.on('end', () => {
             try {
                 const parsed = JSON.parse(body);
-                // ممکن است روبیکا update را مستقیماً بفرستد یا داخل کلید update
                 const update = (parsed.update ?? parsed) as Update;
                 this.client.dispatchUpdate(update);
                 res.writeHead(200).end('OK');

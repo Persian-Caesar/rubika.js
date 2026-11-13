@@ -27,7 +27,12 @@ export interface APIMessage {
     chat_keypad?: Keypad;
     chat_keypad_type?: string;
     inline_keypad?: Keypad;
-    aux_data?: unknown;
+    /** داده کمکی؛ در کلیک دکمه معمولاً شامل button_id است */
+    aux_data?: {
+        start_id?: string | null;
+        button_id?: string;
+        [key: string]: unknown;
+    };
 }
 
 export interface ForwardedFrom {
