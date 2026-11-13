@@ -12,7 +12,7 @@ const client = new RubikaClient({
 });
 
 client.on('ready', (bot) => {
-    console.log(`✅ ربات @${bot.bot_username} آماده است`);
+    console.log(`✅ ربات @${bot.username} آماده است`);
     console.log('📝 حالا در روبیکا به ربات پیام دهید...\n');
 });
 

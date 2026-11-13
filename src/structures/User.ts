@@ -13,9 +13,8 @@ export class User extends Base {
         super(client);
         if ('bot_id' in data) {
             this.id = data.bot_id;
-            this.username = data.bot_username;
-            this.firstName = data.first_name;
-            this.lastName = data.last_name;
+            this.username = data.username; // ← فیلد صحیح
+            this.firstName = data.bot_title; // ← نام نمایشی
             this.isBot = true;
         } else {
             this.id = data.user_id;

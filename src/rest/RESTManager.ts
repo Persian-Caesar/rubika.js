@@ -1,7 +1,7 @@
 import { request } from 'undici';
 import type { APIResponse } from '../types/api';
 import type { APIBot } from '../types/user';
-import type { Update } from '../types/update';
+import type { GetUpdatesResult, Update } from '../types/update';
 import type { APIMessage } from '../types/message';
 import type { Keypad } from '../types/keypad';
 import { RubikaAPIError } from './errors';
@@ -30,7 +30,7 @@ export class RESTManager {
                     if (value !== undefined && value !== null) form.append(key, String(value));
                 }
             }
-            
+
             for (const [key, file] of Object.entries(options.files)) {
                 const view =
                     file.data.buffer instanceof ArrayBuffer
@@ -53,17 +53,22 @@ export class RESTManager {
             body,
         });
 
-        const data = (await responseBody.json()) as APIResponse<T>;
+        // دریافت پاسخ خام
+        const rawData = (await responseBody.json()) as APIResponse<T> & Record<string, any>;
 
-        if (!data.ok) {
-            throw new RubikaAPIError(
-                data.error_code ?? statusCode,
-                data.description ?? 'خطای ناشناخته در API روبیکا',
-                data.parameters,
-            );
+        // بررسی خطا: اگر نه ok===true و نه status==="OK" باشد، یعنی خطا رخ داده
+        const isSuccess = rawData.ok === true || rawData.status === 'OK' || rawData.status === 'ok';
+
+        if (!isSuccess) {
+            // تلاش برای استخراج پیام خطا از فیلدهای مختلف
+            const errorMessage = rawData.description ?? rawData.status ?? 'خطای ناشناخته در API روبیکا';
+            const errorCode = rawData.error_code ?? statusCode;
+
+            throw new RubikaAPIError(errorCode, errorMessage, rawData.parameters);
         }
 
-        return data.result as T;
+        // استخراج نتیجه: اولویت با result، سپس data، در غیر این صورت خود پاسخ خام
+        return (rawData.result ?? rawData.data ?? rawData) as T;
     }
 
     getMe(): Promise<APIBot> {
@@ -82,8 +87,17 @@ export class RESTManager {
         return this.request<{ message_id: string }>('sendMessage', { body: params });
     }
 
-    getUpdates(params?: { start_id?: string; limit?: number }): Promise<Update[]> {
-        return this.request<Update[]>('getUpdates', { body: params ?? {} });
+    getUpdates(params?: { offset_id?: string; limit?: number }): Promise<GetUpdatesResult> {
+        const body: Record<string, unknown> = {
+            limit: String(params?.limit ?? 100), // limit باید رشته باشد
+        };
+
+        // فقط اگر offset_id مقدار معتبر داشت، آن را ارسال کن
+        if (params?.offset_id && params.offset_id !== '0') {
+            body.offset_id = params.offset_id;
+        }
+
+        return this.request<GetUpdatesResult>('getUpdates', { body });
     }
 
     updateBotEndpoint(endpoint: string): Promise<boolean> {

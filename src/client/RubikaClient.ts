@@ -68,8 +68,8 @@ export class RubikaClient extends TypedEmitter<ClientEvents> {
         if (update.type === 'NewMessage' && update.new_message) {
             this.emit('messageCreate', new Message(this, update.new_message));
         }
-        if (update.type === 'EditedMessage' && update.new_message) {
-            this.emit('messageEdit', new Message(this, update.new_message));
+        if (update.type === 'UpdatedMessage' && update.updated_message) {
+            this.emit('messageEdit', new Message(this, update.updated_message));
         }
         if (update.type === 'InlineMessage' && update.inline_message) {
             this.emit('callbackQuery', new CallbackQuery(this, update.inline_message));

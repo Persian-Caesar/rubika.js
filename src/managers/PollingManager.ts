@@ -1,5 +1,4 @@
 import type { RubikaClient } from '../client/RubikaClient';
-import { RubikaAPIError } from '../rest/errors';
 
 export interface PollingOptions {
     interval?: number;
@@ -11,7 +10,7 @@ export class PollingManager {
     private readonly interval: number;
     private readonly limit: number;
     private running = false;
-    private startId = '0';
+    private offsetId: string | undefined = undefined;
 
     constructor(client: RubikaClient, options: PollingOptions = {}) {
         this.client = client;
@@ -32,12 +31,15 @@ export class PollingManager {
     private async loop(): Promise<void> {
         while (this.running) {
             try {
-                const updates = await this.client.rest.getUpdates({
-                    start_id: this.startId,
+                const result = await this.client.rest.getUpdates({
+                    offset_id: this.offsetId, // ← در اولین اجرا undefined است
                     limit: this.limit,
                 });
+
+                const updates = result.updates ?? [];
+                this.offsetId = result.next_offset_id; // ← ذخیره next_offset_id
+
                 for (const update of updates) {
-                    this.startId = update.update_id;
                     this.client.dispatchUpdate(update);
                 }
             } catch (error) {
@@ -47,6 +49,7 @@ export class PollingManager {
             await delay(this.interval);
         }
     }
+
 }
 
 function delay(ms: number): Promise<void> {
