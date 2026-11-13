@@ -32,24 +32,29 @@ export class PollingManager {
         while (this.running) {
             try {
                 const result = await this.client.rest.getUpdates({
-                    offset_id: this.offsetId, // ← در اولین اجرا undefined است
+                    offset_id: this.offsetId,
                     limit: this.limit,
                 });
 
-                const updates = result.updates ?? [];
-                this.offsetId = result.next_offset_id; // ← ذخیره next_offset_id
+                // ✅ حیاتی: next_offset_id را برای درخواست بعدی ذخیره کن
+                // این کار از دریافت مجدد همان آپدیت‌ها جلوگیری می‌کند
+                const newOffset = result.next_offset_id;
+                if (newOffset && newOffset !== this.offsetId) {
+                    this.offsetId = newOffset;
+                }
 
+                const updates = result.updates ?? [];
                 for (const update of updates) {
                     this.client.dispatchUpdate(update);
                 }
             } catch (error) {
+                // در صورت خطا، offset_id را تغییر نده تا از دست رفتن آپدیت جلوگیری شود
                 this.client.emit('error', error);
-                await delay(this.interval);
             }
+            // حتی در صورت خطا هم صبر کن تا از حلقه‌ی سریع جلوگیری شود
             await delay(this.interval);
         }
     }
-
 }
 
 function delay(ms: number): Promise<void> {

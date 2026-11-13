@@ -27,14 +27,12 @@ export class RubikaClient extends TypedEmitter<ClientEvents> {
     private pollingManager?: PollingManager;
     private webhookManager?: WebhookManager;
     private botInfo?: APIBot;
-    private token: string;
 
     constructor(options: RubikaClientOptions) {
         super();
         this.options = options;
         this.mode = options.mode ?? 'polling';
-        this.token = options.token;
-        this.rest = new RESTManager(this.token);
+        this.rest = new RESTManager(options.token);
         this.messages = new MessageManager(this);
         this.media = new MediaManager(this);
     }
@@ -64,15 +62,64 @@ export class RubikaClient extends TypedEmitter<ClientEvents> {
         this.webhookManager = undefined;
     }
 
+    /**
+         * ✅ آپدیت‌ها را به رویدادهای discord.js-like تبدیل می‌کند.
+         * هر آپدیت تنها یک‌بار emit می‌شود (چون PollingManager از آپدیت تکراری جلوگیری می‌کند).
+         */
     dispatchUpdate(update: Update): void {
-        if (update.type === 'NewMessage' && update.new_message) {
-            this.emit('messageCreate', new Message(this, update.new_message));
-        }
-        if (update.type === 'UpdatedMessage' && update.updated_message) {
-            this.emit('messageEdit', new Message(this, update.updated_message));
-        }
-        if (update.type === 'InlineMessage' && update.inline_message) {
-            this.emit('callbackQuery', new CallbackQuery(this, update.inline_message));
+        switch (update.type) {
+            case 'NewMessage':
+                if (update.new_message) {
+                    // ✅ chat_id از سطح اصلی update خوانده می‌شود (نه از sender_id)
+                    const chatId = update.chat_id;
+                    if (chatId) {
+                        this.emit(
+                            'messageCreate',
+                            new Message(this, update.new_message, chatId),
+                        );
+                    }
+                }
+                break;
+
+            case 'UpdatedMessage':
+                if (update.updated_message) {
+                    const chatId = update.chat_id;
+                    if (chatId) {
+                        this.emit(
+                            'messageEdit',
+                            new Message(this, update.updated_message, chatId),
+                        );
+                    }
+                }
+                break;
+
+            case 'RemovedMessage':
+                if (update.removed_message_id) {
+                    this.emit('messageDelete', update.removed_message_id, update.chat_id);
+                }
+                break;
+
+            case 'InlineMessage':
+                if (update.inline_message) {
+                    this.emit('callbackQuery', new CallbackQuery(this, update.inline_message));
+                }
+                break;
+
+            case 'StartedBot':
+                this.emit('botStarted', update);
+                break;
+
+            case 'StoppedBot':
+                this.emit('botStopped', update);
+                break;
+
+            case 'EventData':
+                this.emit('eventData', update);
+                break;
+
+            default:
+                // انواع ناشناخته را نادیده بگیر (یا لاگ کن)
+                break;
         }
     }
 }

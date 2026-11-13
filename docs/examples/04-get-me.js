@@ -21,7 +21,7 @@ async function main() {
         console.log(JSON.stringify(bot, null, 2));
 
         if (bot.bot_id) {
-            console.log(`\n🤖 ربات @${bot.bot_username ?? '?'} (ID: ${bot.bot_id})`);
+            console.log(`\n🤖 ربات @${bot.username ?? '?'} (ID: ${bot.bot_id})`);
         }
     } catch (err) {
         if (err instanceof RubikaAPIError) {

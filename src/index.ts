@@ -20,12 +20,12 @@ export * from './managers/WebhookManager';
 
 export * from './builders/BaseBuilder';
 export * from './builders/InlineKeypadBuilder';
+export * from './builders/MetadataBuilder';
 
 export * from './client/RubikaClient';
 
 export * from './util/Collection';
 
 export type { ClientEvents } from './types/events';
-
 
 export const VERSION = version;

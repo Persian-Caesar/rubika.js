@@ -26,7 +26,7 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 client.on('ready', (bot) => {
     console.log(`╔══════════════════════════════════╗`);
-    console.log(`║  🤖 @${bot.bot_username?.padEnd(28) ?? '?'} ║`);
+    console.log(`║  🤖 @${bot.username?.padEnd(28) ?? '?'} ║`);
     console.log(`║  ✅ آماده دریافت پیام            ║`);
     console.log(`╚══════════════════════════════════╝\n`);
     console.log('📋 دستورات: /menu /edit /delete /photo /doc /count /state\n');

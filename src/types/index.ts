@@ -7,3 +7,5 @@ export type * from './inline-message';
 export type * from './keypad';
 export type * from './media';
 export type * from './poll';
+export type * from './metadata';
+export type * from './bot-command';

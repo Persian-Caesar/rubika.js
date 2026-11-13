@@ -20,17 +20,32 @@ export class MediaManager extends BaseManager {
                 body: { chat_id: chatId, type, caption },
                 files: { file: { data: input, filename: 'file' } },
             });
-            return new Message(this.client, { chat_id: chatId, message_id: data.message_id, time: '0' } as APIMessage);
+            return new Message(this.client, {
+                chat_id: chatId,
+                message_id: data.message_id,
+                time: '0',
+            } as APIMessage);
         }
-        const fileId = input instanceof URL ? input.toString() : input;
+
+        if (input instanceof URL) {
+            throw new Error(
+                'URL به‌عنوان ورودی پشتیبانی نمی‌شود. از file_id (string) یا Buffer استفاده کنید.',
+            );
+        }
+
+        // اصلاح باگ ۱.۵: رشته فقط به‌عنوان file_id در نظر گرفته می‌شود
         const data = await this.client.rest.request<{ message_id: string }>('sendFile', {
-            body: { chat_id: chatId, type, file_id: fileId, caption },
+            body: { chat_id: chatId, type, file_id: input, caption },
         });
-        return new Message(this.client, { chat_id: chatId, message_id: data.message_id, time: '0' } as APIMessage);
+        return new Message(this.client, {
+            chat_id: chatId,
+            message_id: data.message_id,
+            time: '0',
+        } as APIMessage);
     }
 
     async downloadFile(fileId: string): Promise<Buffer> {
         const file = await this.client.rest.getFile(fileId);
-        return this.client.rest.downloadFile(`https://botapi.rubika.ir/v3/${this.client['token']}/download/${file.file_id}`);
+        return this.client.rest.downloadFile(this.client.rest.getDownloadUrl(file.file_id));
     }
 }

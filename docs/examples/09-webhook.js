@@ -23,7 +23,7 @@ const client = new RubikaClient({
 });
 
 client.on('ready', (bot) => {
-    console.log(`✅ @${bot.bot_username} در حالت webhook`);
+    console.log(`✅ @${bot.username} در حالت webhook`);
     console.log(`📡 Endpoint: ${endpoint}`);
     console.log('حالا در روبیکا به ربات پیام دهید\n');
 });

@@ -18,7 +18,7 @@ async function createTestImage() {
 }
 
 client.on('ready', (bot) => {
-    console.log(`✅ @${bot.bot_username} آماده`);
+    console.log(`✅ @${bot.username} آماده`);
     console.log('دستورات: /photo یا /doc\n');
 });
 

@@ -16,7 +16,7 @@ const client = new RubikaClient({
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 client.on('ready', (bot) => {
-  console.log(`✅ @${bot.bot_username} آماده`);
+  console.log(`✅ @${bot.username} آماده`);
   console.log('دستورات: /edit یا /delete\n');
 });
 
