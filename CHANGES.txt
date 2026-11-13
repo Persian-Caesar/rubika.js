@@ -1,0 +1,3 @@
+REMOVED: src/managers/AutoWebhookManager.ts
+REMOVED dependency: cloudflared from package.json
+MODE auto-webhook removed from RubikaClientOptions

@@ -1,14 +1,20 @@
-import type { APIChat } from './chat';
+import type { ChatType } from './chat';
 import type { Keypad } from './keypad';
-import { Poll } from './poll';
+import type { Metadata } from './metadata';
+import type { Poll } from './poll';
 
 export interface APIMessage {
     message_id: string;
     chat_id: string;
+    chat_type?: ChatType;
     sender_id?: string;
     sender_type?: 'User' | 'Bot';
+    first_name?: string;
+    last_name?: string;
+    username?: string;
     text?: string;
     caption?: string;
+    metadata?: Metadata;
     time: string;
     is_edited?: boolean;
     reply_to_message_id?: string;
@@ -19,7 +25,14 @@ export interface APIMessage {
     sticker?: Sticker;
     poll?: Poll;
     chat_keypad?: Keypad;
+    chat_keypad_type?: string;
     inline_keypad?: Keypad;
+    /** داده کمکی؛ در کلیک دکمه معمولاً شامل button_id است */
+    aux_data?: {
+        start_id?: string | null;
+        button_id?: string;
+        [key: string]: unknown;
+    };
 }
 
 export interface ForwardedFrom {

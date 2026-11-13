@@ -8,4 +8,9 @@ export interface APIChat {
     last_name?: string;
     title?: string;
     username?: string;
+    description?: string;
+    invite_link?: string;
+    pin?: string;
+    member_count?: number;
+    permissions?: string[];
 }

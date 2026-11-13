@@ -1,4 +1,4 @@
-import { Keypad } from "./keypad";
+import type { Keypad } from './keypad';
 
 export type FileInput = Buffer | string | URL;
 
