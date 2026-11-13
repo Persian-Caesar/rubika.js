@@ -50,11 +50,30 @@ jobs:
 
         continue-on-error: true
 
-      - name: Setup Node.js for GitHub Packages
+      # ==================================================
+      # Prepare package for GitHub Packages
+      # ==================================================
+
+      - name: Save original package name
+        run: |
+          jq -r '.name' package.json > original_name.txt
+
+      - name: Change package name for GitHub Packages
+        run: |
+          jq '.name = "@persian-caesar/rubika.js"' package.json > temp_package.json
+          mv temp_package.json package.json
+
+      # ==================================================
+      # Publish to GitHub Packages
+      # ==================================================
+
+      - name: Setup GitHub Packages registry
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
           registry-url: "https://npm.pkg.github.com/"
+          scope: "@persian-caesar"
+          package-manager-cache: false
 
       - name: Publish to GitHub Packages
         run: npm publish --access public
